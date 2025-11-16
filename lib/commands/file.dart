@@ -1,17 +1,12 @@
 import 'dart:io';
 
 import 'package:args/args.dart' show ArgParser, ArgResults;
-import 'package:dart_lil_ser/helpers/html_tags/a.dart';
-import 'package:dart_lil_ser/helpers/html_tags/body.dart';
-import 'package:dart_lil_ser/helpers/html_tags/html_doc.dart';
-import 'package:dart_lil_ser/helpers/html_tags/p.dart';
+import '../helpers/html_tags/html_tags.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
-
-import '../helpers/html_tags/head.dart';
 
 /// file serving command
 class FileCmd {
