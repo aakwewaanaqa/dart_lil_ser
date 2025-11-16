@@ -1,5 +1,3 @@
-import 'dart:js_interop';
-
 import 'tag.dart';
 
 class Meta extends Tag {
@@ -10,6 +8,6 @@ class Meta extends Tag {
 
   @override
   void build({required StringBuffer buffer}) {
-    buffer.write('<meta $key="${value.jsify()}" />');
+    buffer.write('<meta $key="$value" />');
   }
 }

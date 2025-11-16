@@ -3,7 +3,7 @@ import 'tag.dart';
 class P extends Tag {
   final String text;
 
-  P({required this.text});
+  const P({required this.text});
 
   @override
   void build({required StringBuffer buffer}) {

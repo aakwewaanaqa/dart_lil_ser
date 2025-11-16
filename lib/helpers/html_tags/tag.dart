@@ -1,11 +1,13 @@
 abstract class Tag {
   void build({required StringBuffer buffer});
+
+  const Tag();
 }
 
 abstract class ContainerTag extends Tag {
   final List<Tag> children;
 
-  ContainerTag({required this.children});
+  const ContainerTag({required this.children});
 
   void preBuild({required StringBuffer buffer});
   void postBuild({required StringBuffer buffer});

@@ -46,12 +46,13 @@ class FileCmd {
     // Construct the file path from the request URI.
     // We use p.join to safely combine path segments.
     // The path is relative to the current working directory.
-    final filePath = p.join(Directory.current.path, request.url.path);
+    final wd = Directory.current.path;
+    final filePath = p.join(wd, request.url.path);
 
     // To prevent path traversal attacks (e.g., /../../etc/passwd),
     // we ensure the resolved path is within the current directory.
     final resolvedPath = p.normalize(filePath);
-    if (!p.isWithin(Directory.current.path, resolvedPath)) {
+    if (!p.isWithin(wd, resolvedPath) && wd != resolvedPath) {
       return Response.forbidden('Access denied.');
     }
 
@@ -60,7 +61,13 @@ class FileCmd {
     if (isDirectory) {
       final dir = Directory(resolvedPath);
       final entries = dir.list();
-      return Response.ok(await _Embeded().dirTemplate(entities: entries));
+      return Response.ok(
+        await _Embeded().dirTemplate(
+          currentPath: request.url.path,
+          entities: entries,
+        ),
+        headers: {HttpHeaders.contentTypeHeader: 'text/html'},
+      );
     } else if (isFile) {
       // The file exists, so we serve it.
       final file = File(resolvedPath);
@@ -105,19 +112,29 @@ class FileCmd {
 
 class _Embeded {
   Future<String> dirTemplate({
+    required String currentPath,
     required Stream<FileSystemEntity> entities,
   }) async {
     return HtmlDoc(
       lang: "zh-TW",
       head: Head.minimal(),
       body: Body(
-        children: [
-          for (final entity in await entities.toList())
+        children: ([
+          H1(text: 'Index of $currentPath'),
+          if (currentPath != '/')
             A(
-              href: entity.path,
-              children: [P(text: entity.path)],
+              href: '..',
+              children: [const P(text: '../')],
             ),
-        ],
+          ...(await entities.map((entity) {
+            final entityName = p.basename(entity.path);
+            final isDir = entity is Directory;
+            return A(
+              href: entityName,
+              children: [P(text: isDir ? '$entityName/' : entityName)],
+            );
+          }).toList()),
+        ]),
       ),
     ).finalize();
   }
