@@ -42,7 +42,8 @@ class FileCmd {
     return 1347;
   }
 
-  Future<Response> _handle(Request request) async {
+  /// Handle GET requests for file serving.
+  Future<Response> _handleGet(Request request) async {
     // Construct the file path from the request URI.
     // We use p.join to safely combine path segments.
     // The path is relative to the current working directory.
@@ -85,6 +86,58 @@ class FileCmd {
     }
   }
 
+  /// Handle POST requests for file uploading.
+  Future<Response> _handlePost(Request request) async {
+    try {
+      // Parse the content type to ensure it's multipart/form-data.
+      final contentType = request.headers[HttpHeaders.contentTypeHeader];
+      if (contentType == null ||
+          !contentType.startsWith('multipart/form-data')) {
+        return Response.badRequest(body: 'Invalid content type.');
+      }
+
+      // Create a temporary directory to store uploaded files.
+      final tempDir = Directory.systemTemp.createTempSync('upload_');
+      final boundary = contentType.split('boundary=').last;
+      final transformer = MimeMultipartTransformer(boundary);
+      final bodyStream = request.read();
+
+      await for (final part in transformer.bind(bodyStream)) {
+        final contentDisposition = part.headers['content-disposition'];
+        if (contentDisposition == null ||
+            !contentDisposition.contains('filename=')) {
+          continue; // Skip parts without a file.
+        }
+
+        // Extract the filename from the content-disposition header.
+        final filename = RegExp(
+          r'filename="([^"]+)"',
+        ).firstMatch(contentDisposition)?.group(1);
+        if (filename == null) {
+          continue;
+        }
+
+        // Save the file to the directory specified by the URL path.
+        final uploadDir = Directory(
+          p.join(Directory.current.path, request.url.path),
+        );
+        if (!await uploadDir.exists()) {
+          await uploadDir.create(recursive: true);
+        }
+        final file = File(p.join(uploadDir.path, filename));
+        final sink = file.openWrite();
+        await part.pipe(sink);
+        await sink.close();
+      }
+
+      // Redirect back to the current directory to refresh the page.
+      final redirectUri = Uri(path: request.url.path);
+      return Response.seeOther(redirectUri);
+    } catch (e) {
+      return Response.internalServerError(body: 'Error during file upload: $e');
+    }
+  }
+
   Future<void> execute(ArgResults args) async {
     if (args.flag('help')) {
       print(argParser.usage);
@@ -96,7 +149,8 @@ class FileCmd {
       final port = await _definePort(args);
 
       final router = Router();
-      router.get('/<ignored|.*>', _handle);
+      router.get('/<ignored|.*>', _handleGet);
+      router.post('/<ignored|.*>', _handlePost);
 
       final handler = const Pipeline()
           .addMiddleware(logRequests())
@@ -116,7 +170,7 @@ class _Embeded {
     required Stream<FileSystemEntity> entities,
   }) async {
     return HtmlDoc(
-      lang: "zh-TW",
+      lang: "en-US",
       head: Head.minimal(),
       body: Body(
         children: ([
@@ -126,6 +180,7 @@ class _Embeded {
               href: '..',
               children: [const P(text: '../')],
             ),
+          // List files and directories
           ...(await entities.map((entity) {
             final entityName = p.basename(entity.path);
             final isDir = entity is Directory;
@@ -134,6 +189,16 @@ class _Embeded {
               children: [P(text: isDir ? '$entityName/' : entityName)],
             );
           }).toList()),
+          // HTML form for file upload
+          Form(
+            method: 'POST',
+            enctype: 'multipart/form-data',
+            children: [
+              Label(text: 'Upload file:', for_: 'file'),
+              Input(type: 'file', id: 'file', name: 'file', required_: true),
+              Button(type: 'submit', text: 'Upload'),
+            ],
+          ),
         ]),
       ),
     ).finalize();
