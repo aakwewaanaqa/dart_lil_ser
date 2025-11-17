@@ -1,11 +1,11 @@
 import 'tag.dart';
 
 class Body extends ContainerTag {
-  Body({required super.children});
+  Body({required super.children, super.style});
 
   @override
   void postBuild({required StringBuffer buffer}) {
-    buffer.write('</body>');
+    buffer.write('</body style="$style">');
   }
 
   @override

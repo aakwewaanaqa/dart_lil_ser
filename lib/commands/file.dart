@@ -173,6 +173,7 @@ class _Embeded {
       lang: "en-US",
       head: Head.minimal(),
       body: Body(
+        style: 'margin: 20px',
         children: ([
           H1(text: 'Index of $currentPath'),
           if (currentPath != '/')
