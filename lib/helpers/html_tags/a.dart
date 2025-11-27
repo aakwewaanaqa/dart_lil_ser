@@ -1,4 +1,4 @@
-import 'tag.dart';
+part of 'html_tags.dart';
 
 class A extends ContainerTag {
   final String href;

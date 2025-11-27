@@ -1,4 +1,4 @@
-import 'tag.dart';
+part of 'html_tags.dart';
 
 class Body extends ContainerTag {
   Body({required super.children, super.style});

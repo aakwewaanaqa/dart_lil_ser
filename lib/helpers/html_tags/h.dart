@@ -1,4 +1,4 @@
-import 'html_tags.dart';
+part of 'html_tags.dart';
 
 abstract class _Heading extends Tag {
   final String text;

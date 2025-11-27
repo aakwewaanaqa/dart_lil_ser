@@ -1,3 +1,5 @@
+part of 'html_tags.dart';
+
 abstract class Tag {
   final String? style;
 

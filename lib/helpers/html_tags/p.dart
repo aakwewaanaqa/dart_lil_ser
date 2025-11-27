@@ -1,4 +1,4 @@
-import 'tag.dart';
+part of 'html_tags.dart';
 
 class P extends Tag {
   final String text;

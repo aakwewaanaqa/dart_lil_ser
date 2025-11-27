@@ -1,6 +1,4 @@
-import 'package:dart_lil_ser/helpers/html_tags/meta.dart';
-
-import 'tag.dart';
+part of 'html_tags.dart';
 
 class Head extends ContainerTag {
   Head({required super.children});

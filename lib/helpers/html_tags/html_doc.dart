@@ -1,7 +1,4 @@
-import 'package:dart_lil_ser/helpers/html_tags/tag.dart';
-
-import 'body.dart';
-import 'head.dart';
+part of 'html_tags.dart';
 
 class HtmlDoc extends Tag {
   final String lang;

@@ -1,4 +1,4 @@
-import 'tag.dart';
+part of 'html_tags.dart';
 
 class Meta extends Tag {
   final String key;

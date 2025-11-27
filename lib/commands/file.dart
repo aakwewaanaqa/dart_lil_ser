@@ -61,7 +61,7 @@ class FileCmd {
     final isDirectory = await FileSystemEntity.isDirectory(resolvedPath);
     if (isDirectory) {
       final dir = Directory(resolvedPath);
-      final entries = dir.list();
+      final entries = await dir.list().toList();
       return Response.ok(
         await _Embeded().dirTemplate(
           currentPath: request.url.path,
@@ -165,10 +165,10 @@ class FileCmd {
 }
 
 class _Embeded {
-  Future<String> dirTemplate({
+  String dirTemplate({
     required String currentPath,
-    required Stream<FileSystemEntity> entities,
-  }) async {
+    required List<FileSystemEntity> entities,
+  }) {
     return HtmlDoc(
       lang: "en-US",
       head: Head.minimal(),
@@ -182,11 +182,11 @@ class _Embeded {
               children: [const P(text: '../')],
             ),
           // List files and directories
-          ...(await entities.map((entity) {
+          ...(entities.map((entity) {
             final entityName = p.basename(entity.path);
             final isDir = entity is Directory;
             return A(
-              href: entityName,
+              href: './$entityName',
               children: [P(text: isDir ? '$entityName/' : entityName)],
             );
           }).toList()),
