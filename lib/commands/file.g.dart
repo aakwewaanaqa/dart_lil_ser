@@ -134,7 +134,8 @@ const _$editorHtml = r'''
         const saveBtn = document.getElementById("saveBtn");
         const filename = "{{FILENAME}}";
 
-        editor.focus(); // Auto-focus the editor on page load
+        // Auto-focus the editor on page load
+        editor.focus();
 
         // Handle tab key in textarea
         editor.addEventListener('keydown', function (e) {
