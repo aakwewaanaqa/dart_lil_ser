@@ -88,9 +88,30 @@ class FileCmd {
           mime == 'application/x-shellscript' ||
           mime == 'application/xml') {
         final content = await file.readAsString();
+
+        // Determine CodeMirror mode
+        String mode = 'null'; // Default to plain text
+        if (mime == 'application/json') {
+          mode = '"application/json"';
+        } else if (mime == 'application/javascript') {
+          mode = '"javascript"';
+        } else if (mime == 'application/xml' || mime == 'text/html') {
+          mode = '"xml"';
+        } else if (mime == 'text/css') {
+          mode = '"css"';
+        } else if (mime == 'application/x-shellscript') {
+          mode = '"shell"';
+        } else if (file.path.endsWith('.dart')) {
+          mode = '"dart"';
+        } else if (file.path.endsWith('.yaml') || file.path.endsWith('.yml')) {
+          mode = '"yaml"';
+        }
+
         final html = editorHtml
+            .replaceFirst('{{MODE}}', mode)
             .replaceFirst('{{FILENAME}}', p.basename(file.path))
             .replaceFirst('{{CONTENT}}', content);
+
         return Response.ok(
           html,
           headers: {HttpHeaders.contentTypeHeader: 'text/html'},

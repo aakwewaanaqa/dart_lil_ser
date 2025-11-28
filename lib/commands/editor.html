@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>macOS-Style File Editor</title>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/neo.min.css">
     <style>
         :root {
             --bg: #f5f5f7;
@@ -37,6 +40,9 @@
             border-radius: var(--radius);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
         }
 
         .titlebar {
@@ -45,6 +51,7 @@
             display: flex;
             gap: 8px;
             border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .traffic-lights {
@@ -66,33 +73,37 @@
         }
 
         .content {
-            padding: 20px;
+            padding: 0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        input[type="file"] {
-            margin-bottom: 15px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 60vh;
-            resize: none;
-            padding: 12px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
+        /* CodeMirror Customization */
+        .CodeMirror {
+            height: 100%;
             font-family: Menlo, monospace;
             font-size: 14px;
-            outline: none;
             background: #fafafa;
+        }
+
+        .footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            background: #f9f9f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         button {
             background: var(--button-bg);
             border: 1px solid var(--border);
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: var(--radius);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: background 0.2s;
         }
 
@@ -111,53 +122,64 @@
             <span style="margin-left: 10px; font-weight: 500; font-size: 13px;">{{FILENAME}}</span>
         </div>
         <div class="content">
-            <textarea id="editor" placeholder="Start typing...">{{CONTENT}}</textarea>
-
-            <br><br>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button id="saveBtn">Save</button>
-            </div>
+            <textarea id="editor">{{CONTENT}}</textarea>
+        </div>
+        <div class="footer">
+            <button id="saveBtn">Save</button>
         </div>
     </div>
 
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/dart/dart.min.js"></script>
+
     <script>
-        const editor = document.getElementById("editor");
         const saveBtn = document.getElementById("saveBtn");
         const filename = "{{FILENAME}}";
+        const mode = {{MODE}};
 
-        // Auto-focus the editor on page load
-        editor.focus();
-
-        // Handle tab key in textarea
-        editor.addEventListener('keydown', function (e) {
-            if (e.key == 'Tab') {
-                e.preventDefault();
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
-
-                // set textarea value to: text before caret + tab + text after caret
-                this.value = this.value.substring(0, start) +
-                    "\t" + this.value.substring(end);
-
-                // put caret at right position again
-                this.selectionStart = this.selectionEnd = start + 1;
-            }
-
-            // Handle Cmd+S or Ctrl+S
-            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-                e.preventDefault();
-                saveBtn.click();
+        // Initialize CodeMirror
+        const cm = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            lineNumbers: true,
+            mode: mode,
+            theme: "neo",
+            lineWrapping: true,
+            indentUnit: 4,
+            extraKeys: {
+                "Tab": function (cm) {
+                    if (cm.somethingSelected()) {
+                        cm.indentSelection("add");
+                    } else {
+                        cm.replaceSelection("    ", "end");
+                    }
+                },
+                "Cmd-S": function (cm) {
+                    saveBtn.click();
+                },
+                "Ctrl-S": function (cm) {
+                    saveBtn.click();
+                }
             }
         });
+
+        // Focus editor
+        cm.focus();
 
         saveBtn.addEventListener("click", async () => {
             saveBtn.disabled = true;
             saveBtn.innerText = "Saving...";
 
             try {
-                const blob = new Blob([editor.value], { type: "text/plain" });
+                // Get content from CodeMirror
+                const content = cm.getValue();
+                const blob = new Blob([content], { type: "text/plain" });
                 const formData = new FormData();
-                // Send as 'file' to match the server's expected field name
                 formData.append("file", blob, filename);
 
                 const response = await fetch(window.location.href, {
