@@ -85,6 +85,7 @@ class FileCmd {
       if (mime.startsWith('text/') ||
           mime == 'application/json' ||
           mime == 'application/javascript' ||
+          mime == 'application/x-shellscript' ||
           mime == 'application/xml') {
         final content = await file.readAsString();
         final html = editorHtml
