@@ -1,3 +1,4 @@
+//
 import 'dart:io';
 
 import 'package:args/args.dart' show ArgParser, ArgResults;
@@ -7,6 +8,12 @@ import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
+import 'package:embed_annotation/embed_annotation.dart';
+
+part 'file.g.dart';
+
+@EmbedStr('editor.html')
+String editorHtml = _$editorHtml;
 
 /// file serving command
 class FileCmd {
@@ -63,16 +70,33 @@ class FileCmd {
       final dir = Directory(resolvedPath);
       final entries = await dir.list().toList();
       return Response.ok(
-        await _Embeded().dirTemplate(
+        _Embeded().dirTemplate(
           currentPath: request.url.path,
           entities: entries,
         ),
         headers: {HttpHeaders.contentTypeHeader: 'text/html'},
       );
     } else if (isFile) {
-      // The file exists, so we serve it.
+      // The file exists.
       final file = File(resolvedPath);
       final mime = lookupMimeType(file.path) ?? 'application/octet-stream';
+
+      // If it's a text file (or likely text), serve the editor.
+      if (mime.startsWith('text/') ||
+          mime == 'application/json' ||
+          mime == 'application/javascript' ||
+          mime == 'application/xml') {
+        final content = await file.readAsString();
+        final html = editorHtml
+            .replaceFirst('{{FILENAME}}', p.basename(file.path))
+            .replaceFirst('{{CONTENT}}', content);
+        return Response.ok(
+          html,
+          headers: {HttpHeaders.contentTypeHeader: 'text/html'},
+        );
+      }
+
+      // Otherwise serve the file content directly.
       final length = (await file.length()).toString();
       final headers = {
         HttpHeaders.contentTypeHeader: mime,
@@ -96,8 +120,6 @@ class FileCmd {
         return Response.badRequest(body: 'Invalid content type.');
       }
 
-      // Create a temporary directory to store uploaded files.
-      final tempDir = Directory.systemTemp.createTempSync('upload_');
       final boundary = contentType.split('boundary=').last;
       final transformer = MimeMultipartTransformer(boundary);
       final bodyStream = request.read();
@@ -117,14 +139,21 @@ class FileCmd {
           continue;
         }
 
-        // Save the file to the directory specified by the URL path.
-        final uploadDir = Directory(
-          p.join(Directory.current.path, request.url.path),
-        );
-        if (!await uploadDir.exists()) {
-          await uploadDir.create(recursive: true);
+        // Resolve the target path.
+        final targetPath = p.join(Directory.current.path, request.url.path);
+
+        File file;
+        if (await FileSystemEntity.isFile(targetPath)) {
+          // If the target is an existing file, overwrite it (Editor Save).
+          file = File(targetPath);
+        } else {
+          // Otherwise, treat it as a directory (File Upload).
+          final uploadDir = Directory(targetPath);
+          if (!await uploadDir.exists()) {
+            await uploadDir.create(recursive: true);
+          }
+          file = File(p.join(uploadDir.path, filename));
         }
-        final file = File(p.join(uploadDir.path, filename));
         final sink = file.openWrite();
         await part.pipe(sink);
         await sink.close();
@@ -132,9 +161,12 @@ class FileCmd {
 
       // Redirect back to the current directory to refresh the page.
       final redirectUri = Uri(path: request.url.path);
+      print(redirectUri);
       return Response.seeOther(redirectUri);
-    } catch (e) {
-      return Response.internalServerError(body: 'Error during file upload: $e');
+    } catch (e, s) {
+      return Response.internalServerError(
+        body: 'Error during file upload: $e $s',
+      );
     }
   }
 
@@ -186,7 +218,7 @@ class _Embeded {
             final entityName = p.basename(entity.path);
             final isDir = entity is Directory;
             return A(
-              href: './$entityName',
+              href: isDir ? './$entityName/' : './$entityName',
               children: [P(text: isDir ? '$entityName/' : entityName)],
             );
           }).toList()),

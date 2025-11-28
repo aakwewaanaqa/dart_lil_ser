@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>macOS-Style File Editor</title>
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --panel: white;
+            --border: #d2d2d7;
+            --text: #1d1d1f;
+            --button-bg: #e9e9ed;
+            --button-hover: #dcdcde;
+            --radius: 12px;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            padding: 40px;
+        }
+
+        h2 {
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .window {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .titlebar {
+            background: #ececec;
+            padding: 10px 14px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .traffic-lights {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .close {
+            background: #ff5f57;
+        }
+
+        .minimize {
+            background: #febc2e;
+        }
+
+        .maximize {
+            background: #28c840;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 60vh;
+            resize: none;
+            padding: 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            font-family: Menlo, monospace;
+            font-size: 14px;
+            outline: none;
+            background: #fafafa;
+        }
+
+        button {
+            background: var(--button-bg);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--button-hover);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="titlebar">
+            <div class="traffic-lights close"></div>
+            <div class="traffic-lights minimize"></div>
+            <div class="traffic-lights maximize"></div>
+            <span style="margin-left: 10px; font-weight: 500; font-size: 13px;">{{FILENAME}}</span>
+        </div>
+        <div class="content">
+            <textarea id="editor" placeholder="Start typing...">{{CONTENT}}</textarea>
+
+            <br><br>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="saveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById("editor");
+        const saveBtn = document.getElementById("saveBtn");
+        const filename = "{{FILENAME}}";
+
+        editor.focus(); // Auto-focus the editor on page load
+
+        // Handle tab key in textarea
+        editor.addEventListener('keydown', function (e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+
+                // set textarea value to: text before caret + tab + text after caret
+                this.value = this.value.substring(0, start) +
+                    "\t" + this.value.substring(end);
+
+                // put caret at right position again
+                this.selectionStart = this.selectionEnd = start + 1;
+            }
+
+            // Handle Cmd+S or Ctrl+S
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                saveBtn.click();
+            }
+        });
+
+        saveBtn.addEventListener("click", async () => {
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
+
+            try {
+                const blob = new Blob([editor.value], { type: "text/plain" });
+                const formData = new FormData();
+                // Send as 'file' to match the server's expected field name
+                formData.append("file", blob, filename);
+
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    saveBtn.innerText = "Saved!";
+                    setTimeout(() => {
+                        saveBtn.innerText = "Save";
+                        saveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert("Failed to save file.");
+                    saveBtn.innerText = "Save";
+                    saveBtn.disabled = false;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error saving file: " + e.message);
+                saveBtn.innerText = "Save";
+                saveBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
