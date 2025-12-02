@@ -2,7 +2,7 @@
 import 'dart:io';
 
 import 'package:args/args.dart' show ArgParser, ArgResults;
-import '../helpers/html_tags/html_tags.dart';
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
@@ -14,6 +14,9 @@ part 'file.g.dart';
 
 @EmbedStr('editor.html')
 String editorHtml = _$editorHtml;
+
+@EmbedStr('directory.html')
+String directoryHtml = _$directoryHtml;
 
 /// file serving command
 class FileCmd {
@@ -95,8 +98,10 @@ class FileCmd {
           mode = '"application/json"';
         } else if (mime == 'application/javascript') {
           mode = '"javascript"';
-        } else if (mime == 'application/xml' || mime == 'text/html') {
+        } else if (mime == 'application/xml') {
           mode = '"xml"';
+        } else if (mime == 'text/html') {
+          mode = '"htmlmixed"';
         } else if (mime == 'text/css') {
           mode = '"css"';
         } else if (mime == 'application/x-shellscript') {
@@ -105,6 +110,18 @@ class FileCmd {
           mode = '"dart"';
         } else if (file.path.endsWith('.yaml') || file.path.endsWith('.yml')) {
           mode = '"yaml"';
+        } else if (file.path.endsWith('.go')) {
+          mode = '"text/x-go"';
+        } else if (file.path.endsWith('.py')) {
+          mode = '"python"';
+        } else if (file.path.endsWith('.rs')) {
+          mode = '"text/x-rustsrc"';
+        } else if (file.path.endsWith('.java')) {
+          mode = '"text/x-java"';
+        } else if (file.path.endsWith('.cs')) {
+          mode = '"text/x-csharp"';
+        } else if (file.path.endsWith('.ts')) {
+          mode = '"application/typescript"';
         }
 
         final html = editorHtml
@@ -223,39 +240,46 @@ class _Embeded {
     required String currentPath,
     required List<FileSystemEntity> entities,
   }) {
-    return HtmlDoc(
-      lang: "en-US",
-      head: Head.minimal(),
-      body: Body(
-        style: 'margin: 20px',
-        children: ([
-          H1(text: 'Index of $currentPath'),
-          if (currentPath != '/')
-            A(
-              href: '..',
-              children: [const P(text: '../')],
-            ),
-          // List files and directories
-          ...(entities.map((entity) {
-            final entityName = p.basename(entity.path);
-            final isDir = entity is Directory;
-            return A(
-              href: isDir ? './$entityName/' : './$entityName',
-              children: [P(text: isDir ? '$entityName/' : entityName)],
-            );
-          }).toList()),
-          // HTML form for file upload
-          Form(
-            method: 'POST',
-            enctype: 'multipart/form-data',
-            children: [
-              Label(text: 'Upload file:', for_: 'file'),
-              Input(type: 'file', id: 'file', name: 'file', required_: true),
-              Button(type: 'submit', text: 'Upload'),
-            ],
-          ),
-        ]),
-      ),
-    ).finalize();
+    final fileListBuffer = StringBuffer();
+
+    // Add parent directory link if not root
+    if (currentPath != '/') {
+      fileListBuffer.write('''
+        <a href=".." class="file-item">
+            <span class="icon">📁</span>
+            <span class="name">..</span>
+        </a>
+      ''');
+    }
+
+    // Sort entities: directories first, then files
+    entities.sort((a, b) {
+      if (a is Directory && b is File) return -1;
+      if (a is File && b is Directory) return 1;
+      return p.basename(a.path).compareTo(p.basename(b.path));
+    });
+
+    for (final entity in entities) {
+      final entityName = p.basename(entity.path);
+      final isDir = entity is Directory;
+      final href = isDir ? './$entityName/' : './$entityName';
+      final icon = isDir ? '📁' : '📄';
+
+      fileListBuffer.write('''
+        <a href="$href" class="file-item">
+            <span class="icon">$icon</span>
+            <span class="name">$entityName</span>
+        </a>
+      ''');
+    }
+
+    return directoryHtml
+        .replaceFirst('{{CURRENT_PATH}}', currentPath)
+        .replaceFirst(
+          '{{CURRENT_PATH}}',
+          currentPath,
+        ) // Replace in title and body
+        .replaceFirst('{{FILE_LIST}}', fileListBuffer.toString())
+        .replaceFirst('{{ITEM_COUNT}}', entities.length.toString());
   }
 }
