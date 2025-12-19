@@ -127,6 +127,67 @@
             flex-shrink: 0;
         }
 
+        .qr-container {
+            position: relative;
+        }
+
+        .qr-button {
+            background: var(--button-bg);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-modal.show {
+            display: flex;
+        }
+
+        .qr-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .qr-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .qr-content img {
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        .close-qr {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .close-qr:hover {
+            background: #0051d5;
+        }
+
         .upload-form {
             display: flex;
             align-items: center;
@@ -168,12 +229,36 @@
         </div>
         <div class="footer">
             <span style="font-size: 12px; color: #888;">{{ITEM_COUNT}} items</span>
-            <form class="upload-form" method="POST" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" required>
-                <button type="submit">Upload</button>
-            </form>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="qr-button" onclick="showQR()">Show QR Code</button>
+                <form class="upload-form" method="POST" enctype="multipart/form-data">
+                    <input type="file" id="file" name="file" required>
+                    <button type="submit">Upload</button>
+                </form>
+            </div>
         </div>
     </div>
+
+    <div id="qrModal" class="qr-modal" onclick="hideQR()">
+        <div class="qr-content" onclick="event.stopPropagation()">
+            <h3>Scan to visit this page</h3>
+            <img id="qrcode" alt="QR Code">
+            <button class="close-qr" onclick="hideQR()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function showQR() {
+            const currentUrl = window.location.href;
+            const qrcodeImg = document.getElementById('qrcode');
+            qrcodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
+            document.getElementById('qrModal').classList.add('show');
+        }
+
+        function hideQR() {
+            document.getElementById('qrModal').classList.remove('show');
+        }
+    </script>
 </body>
 
 </html>
