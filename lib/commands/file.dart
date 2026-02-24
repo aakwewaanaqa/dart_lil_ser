@@ -262,7 +262,8 @@ class _Embeded {
     for (final entity in entities) {
       final entityName = p.basename(entity.path);
       final isDir = entity is Directory;
-      final href = isDir ? './$entityName/' : './$entityName';
+      final encodedName = Uri.encodeComponent(entityName);
+      final href = isDir ? './$encodedName/' : './$encodedName';
       final icon = isDir ? '📁' : '📄';
 
       fileListBuffer.write('''
