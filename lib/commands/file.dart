@@ -73,7 +73,7 @@ class FileCmd {
       final dir = Directory(resolvedPath);
       final entries = await dir.list().toList();
       return Response.ok(
-        _Embeded().dirTemplate(
+        Embedded().dirTemplate(
           currentPath: request.url.path,
           entities: entries,
         ),
@@ -235,7 +235,7 @@ class FileCmd {
   }
 }
 
-class _Embeded {
+class Embedded {
   String dirTemplate({
     required String currentPath,
     required List<FileSystemEntity> entities,
