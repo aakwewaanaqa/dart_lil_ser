@@ -1,0 +1,33 @@
+name: Release CI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install dependencies
+        run: dart pub get
+      - name: Generate code
+        run: dart run build_runner build
+      - name: Build executables
+        run: |
+          mkdir -p build
+          chmod +x to_builds.sh
+          ./to_builds.sh
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/linux/dartser
+            build/windows/dartser
+            build/macos/dartser
