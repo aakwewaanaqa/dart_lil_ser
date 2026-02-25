@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: dart pub get
       - name: Generate code
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
       - name: Build executable
         run: dart compile exe -o ${{ matrix.output }} bin/main.dart
         shell: bash
