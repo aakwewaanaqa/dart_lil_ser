@@ -16,7 +16,7 @@ jobs:
           - os: windows-latest
             platform: windows
             output: dartser.exe
-          - os: macos-latest
+          - os: macos-14
             platform: macos
             output: dartser
     runs-on: ${{ matrix.os }}
