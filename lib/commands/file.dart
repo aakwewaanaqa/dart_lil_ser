@@ -73,7 +73,7 @@ class FileCmd {
       final dir = Directory(resolvedPath);
       final entries = await dir.list().toList();
       return Response.ok(
-        _Embeded().dirTemplate(
+        Embedded().dirTemplate(
           currentPath: request.url.path,
           entities: entries,
         ),
@@ -235,7 +235,7 @@ class FileCmd {
   }
 }
 
-class _Embeded {
+class Embedded {
   String dirTemplate({
     required String currentPath,
     required List<FileSystemEntity> entities,
@@ -262,7 +262,8 @@ class _Embeded {
     for (final entity in entities) {
       final entityName = p.basename(entity.path);
       final isDir = entity is Directory;
-      final href = isDir ? './$entityName/' : './$entityName';
+      final encodedName = Uri.encodeComponent(entityName);
+      final href = isDir ? './$encodedName/' : './$encodedName';
       final icon = isDir ? '📁' : '📄';
 
       fileListBuffer.write('''
