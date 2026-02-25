@@ -12,13 +12,13 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            output: dartser
+            output: dartser-linux
           - os: windows-latest
             platform: windows
-            output: dartser.exe
+            output: dartser-windows.exe
           - os: macos-14
             platform: macos
-            output: dartser
+            output: dartser-macos
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +51,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/dartser-linux/dartser
-            artifacts/dartser-windows/dartser.exe
-            artifacts/dartser-macos/dartser
+            artifacts/dartser-linux/dartser-linux
+            artifacts/dartser-windows/dartser-windows.exe
+            artifacts/dartser-macos/dartser-macos
