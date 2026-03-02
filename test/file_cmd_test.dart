@@ -135,4 +135,93 @@ void main() {
       expect(body, contains('%E4%B8%AD%E6%96%87.txt'));
     });
   });
+
+  group('FileCmd readonly mode (default)', () {
+    late Directory tempDir;
+    late Directory originalDir;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('dart_lil_ser_test_');
+      originalDir = Directory.current;
+      Directory.current = tempDir;
+    });
+
+    tearDown(() async {
+      Directory.current = originalDir;
+      await tempDir.delete(recursive: true);
+    });
+
+    test('POST returns 403 when writable is false (default)', () async {
+      final handler = FileCmd().buildHandler();
+      final request = Request(
+        'POST',
+        Uri.parse('http://localhost/'),
+        headers: {
+          'content-type': 'multipart/form-data; boundary=----boundary',
+        },
+        body: '------boundary--\r\n',
+      );
+      final response = await handler(request);
+      expect(response.statusCode, 403);
+    });
+
+    test('directory listing does not contain upload form in readonly mode',
+        () async {
+      final handler = FileCmd().buildHandler();
+      final request = Request(
+        'GET',
+        Uri.parse('http://localhost/'),
+      );
+      final response = await handler(request);
+      expect(response.statusCode, 200);
+      final body = await response.readAsString();
+      expect(body, isNot(contains('upload-form')));
+      expect(body, isNot(contains('type="file"')));
+    });
+
+    test('directory listing contains upload form in write mode', () async {
+      final handler = FileCmd(writable: true).buildHandler();
+      final request = Request(
+        'GET',
+        Uri.parse('http://localhost/'),
+      );
+      final response = await handler(request);
+      expect(response.statusCode, 200);
+      final body = await response.readAsString();
+      expect(body, contains('upload-form'));
+      expect(body, contains('type="file"'));
+    });
+
+    test('editor shows Save button in write mode', () async {
+      final file = File(p.join(tempDir.path, 'hello.txt'));
+      await file.writeAsString('hello world');
+
+      final handler = FileCmd(writable: true).buildHandler();
+      final request = Request(
+        'GET',
+        Uri.parse('http://localhost/hello.txt'),
+      );
+      final response = await handler(request);
+      expect(response.statusCode, 200);
+      final body = await response.readAsString();
+      expect(body, contains('saveBtn'));
+      expect(body, contains('readOnly: false'));
+    });
+
+    test('editor does not show Save button in readonly mode', () async {
+      final file = File(p.join(tempDir.path, 'hello.txt'));
+      await file.writeAsString('hello world');
+
+      final handler = FileCmd().buildHandler();
+      final request = Request(
+        'GET',
+        Uri.parse('http://localhost/hello.txt'),
+      );
+      final response = await handler(request);
+      expect(response.statusCode, 200);
+      final body = await response.readAsString();
+      expect(body, isNot(contains('id="saveBtn"')));
+      expect(body, contains('readOnly: true'));
+    });
+  });
 }

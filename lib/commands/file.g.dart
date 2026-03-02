@@ -134,7 +134,7 @@ const _$editorHtml = r'''
             <textarea id="editor">{{CONTENT}}</textarea>
         </div>
         <div class="footer">
-            <button id="saveBtn">Save</button>
+            {{SAVE_BUTTON}}
         </div>
     </div>
 
@@ -163,6 +163,7 @@ const _$editorHtml = r'''
             mode: mode,
             theme: "neo",
             lineWrapping: true,
+            readOnly: {{READONLY}},
             indentUnit: 4,
             extraKeys: {
                 "Tab": function (cm) {
@@ -173,10 +174,10 @@ const _$editorHtml = r'''
                     }
                 },
                 "Cmd-S": function (cm) {
-                    saveBtn.click();
+                    if (saveBtn) saveBtn.click();
                 },
                 "Ctrl-S": function (cm) {
-                    saveBtn.click();
+                    if (saveBtn) saveBtn.click();
                 }
             }
         });
@@ -184,6 +185,7 @@ const _$editorHtml = r'''
         // Focus editor
         cm.focus();
 
+        if (saveBtn) {
         saveBtn.addEventListener("click", async () => {
             saveBtn.disabled = true;
             saveBtn.innerText = "Saving...";
@@ -218,6 +220,7 @@ const _$editorHtml = r'''
                 saveBtn.disabled = false;
             }
         });
+        }
     </script>
 </body>
 
@@ -395,10 +398,7 @@ const _$directoryHtml = r'''
         </div>
         <div class="footer">
             <span style="font-size: 12px; color: #888;">{{ITEM_COUNT}} items</span>
-            <form class="upload-form" method="POST" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" required>
-                <button type="submit">Upload</button>
-            </form>
+            {{UPLOAD_FORM}}
         </div>
     </div>
 </body>
