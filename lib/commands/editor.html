@@ -125,7 +125,7 @@
             <textarea id="editor">{{CONTENT}}</textarea>
         </div>
         <div class="footer">
-            <button id="saveBtn">Save</button>
+            {{SAVE_BUTTON}}
         </div>
     </div>
 
@@ -154,6 +154,7 @@
             mode: mode,
             theme: "neo",
             lineWrapping: true,
+            readOnly: {{READONLY}},
             indentUnit: 4,
             extraKeys: {
                 "Tab": function (cm) {
@@ -164,10 +165,10 @@
                     }
                 },
                 "Cmd-S": function (cm) {
-                    saveBtn.click();
+                    if (saveBtn) saveBtn.click();
                 },
                 "Ctrl-S": function (cm) {
-                    saveBtn.click();
+                    if (saveBtn) saveBtn.click();
                 }
             }
         });
@@ -175,6 +176,7 @@
         // Focus editor
         cm.focus();
 
+        if (saveBtn) {
         saveBtn.addEventListener("click", async () => {
             saveBtn.disabled = true;
             saveBtn.innerText = "Saving...";
@@ -209,6 +211,7 @@
                 saveBtn.disabled = false;
             }
         });
+        }
     </script>
 </body>
 

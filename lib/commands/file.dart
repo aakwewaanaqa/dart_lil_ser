@@ -20,9 +20,19 @@ String directoryHtml = _$directoryHtml;
 
 /// file serving command
 class FileCmd {
+  bool writable;
+
+  FileCmd({this.writable = false});
+
   ArgParser get argParser {
     return ArgParser()
       ..addFlag('help', abbr: 'h', negatable: false, help: 'Print usage.')
+      ..addFlag(
+        'write',
+        abbr: 'w',
+        negatable: false,
+        help: 'Allow file uploads and edits (default: readonly).',
+      )
       ..addOption('port', abbr: 'p', help: 'The port to server files')
       ..addOption('ip', abbr: 'i', help: 'The IP to serve files');
   }
@@ -76,6 +86,7 @@ class FileCmd {
         Embedded().dirTemplate(
           currentPath: request.url.path,
           entities: entries,
+          writable: writable,
         ),
         headers: {HttpHeaders.contentTypeHeader: 'text/html'},
       );
@@ -124,10 +135,14 @@ class FileCmd {
           mode = '"application/typescript"';
         }
 
+        final saveButton =
+            writable ? '<button id="saveBtn">Save</button>' : '';
         final html = editorHtml
             .replaceFirst('{{MODE}}', mode)
             .replaceFirst('{{FILENAME}}', p.basename(file.path))
-            .replaceFirst('{{CONTENT}}', content);
+            .replaceFirst('{{CONTENT}}', content)
+            .replaceFirst('{{SAVE_BUTTON}}', saveButton)
+            .replaceFirst('{{READONLY}}', writable ? 'false' : 'true');
 
         return Response.ok(
           html,
@@ -151,6 +166,9 @@ class FileCmd {
 
   /// Handle POST requests for file uploading.
   Future<Response> _handlePost(Request request) async {
+    if (!writable) {
+      return Response.forbidden('Server is in read-only mode.');
+    }
     try {
       // Parse the content type to ensure it's multipart/form-data.
       final contentType = request.headers[HttpHeaders.contentTypeHeader];
@@ -224,6 +242,7 @@ class FileCmd {
     }
 
     try {
+      writable = args.flag('write');
       final ip = await _defineIp(args);
       final port = await _definePort(args);
 
@@ -243,6 +262,7 @@ class Embedded {
   String dirTemplate({
     required String currentPath,
     required List<FileSystemEntity> entities,
+    bool writable = false,
   }) {
     final fileListBuffer = StringBuffer();
 
@@ -278,6 +298,11 @@ class Embedded {
       ''');
     }
 
+    const uploadForm = '''<form class="upload-form" method="POST" enctype="multipart/form-data">
+                <input type="file" id="file" name="file" required>
+                <button type="submit">Upload</button>
+            </form>''';
+
     return directoryHtml
         .replaceFirst('{{CURRENT_PATH}}', currentPath)
         .replaceFirst(
@@ -285,6 +310,7 @@ class Embedded {
           currentPath,
         ) // Replace in title and body
         .replaceFirst('{{FILE_LIST}}', fileListBuffer.toString())
-        .replaceFirst('{{ITEM_COUNT}}', entities.length.toString());
+        .replaceFirst('{{ITEM_COUNT}}', entities.length.toString())
+        .replaceFirst('{{UPLOAD_FORM}}', writable ? uploadForm : '');
   }
 }
