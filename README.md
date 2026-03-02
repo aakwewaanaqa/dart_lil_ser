@@ -53,6 +53,24 @@ mv dartser.exe /usr/bin/
 
 ---
 
+## 使用方式
+
+在想要伺服的目錄下執行：
+
+```bash
+dartser file
+```
+
+預設會在 `http://<你的區網 IP>:1347` 提供服務。
+
+也可以自訂 IP 與 Port：
+
+```bash
+dartser file -i 127.0.0.1 -p 8080
+```
+
+---
+
 ### 安裝程式碼（從原始碼編譯）
 
 需要先安裝 [Dart SDK](https://dart.dev/get-dart)（版本 `^3.9.2`）。
@@ -78,21 +96,3 @@ sudo mv dartser /usr/bin/ # Windows Git Bash 不需要 sudo
 
 1. 將 `dartser.exe` 移動到 `C:\Program Files\dartser\`
 2. 將 `C:\Program Files\dartser` 加入系統環境變數 `Path`
-
----
-
-## 使用方式
-
-在想要伺服的目錄下執行：
-
-```bash
-dartser file
-```
-
-預設會在 `http://<你的區網 IP>:1347` 提供服務。
-
-也可以自訂 IP 與 Port：
-
-```bash
-dartser file -i 127.0.0.1 -p 8080
-```
