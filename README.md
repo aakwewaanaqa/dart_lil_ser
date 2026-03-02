@@ -17,23 +17,14 @@
 
 ### 下載程式碼（已編譯的執行檔）
 
-前往 [Releases 頁面](https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest) 下載對應平台的執行檔：
-
-| 平台 | 下載連結 |
-|------|---------|
-| Linux (x64) | [dartser-linux](https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest/download/dartser-linux) |
-| Windows (x64) | [dartser-windows.exe](https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest/download/dartser-windows.exe) |
-| macOS (Apple Silicon) | [dartser-macos](https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest/download/dartser-macos) |
-
-下載後，**統一重新命名為 `dartser`**（Windows 為 `dartser.exe`），再放到環境變數的路徑中。
+選擇你的平台，用 `curl` 直接下載到目標位置：
 
 #### Linux / macOS
 
 ```bash
-# 以 Linux 為例，macOS 步驟相同
-mv dartser-linux dartser
-chmod +x dartser
-sudo mv dartser /usr/bin/
+# 以 Linux 為例，macOS 將 dartser-linux 換成 dartser-macos
+sudo curl -L https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest/download/dartser-linux -o /usr/bin/dartser
+sudo chmod +x /usr/bin/dartser
 ```
 
 #### Windows
@@ -41,8 +32,7 @@ sudo mv dartser /usr/bin/
 **方案一：使用 Git Bash（安裝到 `/usr/bin`）**
 
 ```bash
-mv dartser-windows.exe dartser.exe
-mv dartser.exe /usr/bin/
+curl -L https://github.com/aakwewaanaqa/dart_lil_ser/releases/latest/download/dartser-windows.exe -o /usr/bin/dartser.exe
 ```
 
 **方案二：手動放到 `C:\Program Files`**
