@@ -58,7 +58,7 @@ class FileCmd {
     // We use p.join to safely combine path segments.
     // The path is relative to the current working directory.
     final wd = Directory.current.path;
-    final filePath = p.join(wd, request.url.path);
+    final filePath = p.join(wd, Uri.decodeFull(request.url.path));
 
     // To prevent path traversal attacks (e.g., /../../etc/passwd),
     // we ensure the resolved path is within the current directory.
@@ -179,7 +179,7 @@ class FileCmd {
         }
 
         // Resolve the target path.
-        final targetPath = p.join(Directory.current.path, request.url.path);
+        final targetPath = p.join(Directory.current.path, Uri.decodeFull(request.url.path));
 
         File file;
         if (await FileSystemEntity.isFile(targetPath)) {
@@ -209,6 +209,14 @@ class FileCmd {
     }
   }
 
+  /// Builds the shelf [Handler] for this command (useful for testing).
+  Handler buildHandler() {
+    final router = Router();
+    router.get('/<ignored|.*>', _handleGet);
+    router.post('/<ignored|.*>', _handlePost);
+    return router.call;
+  }
+
   Future<void> execute(ArgResults args) async {
     if (args.flag('help')) {
       print(argParser.usage);
@@ -219,13 +227,9 @@ class FileCmd {
       final ip = await _defineIp(args);
       final port = await _definePort(args);
 
-      final router = Router();
-      router.get('/<ignored|.*>', _handleGet);
-      router.post('/<ignored|.*>', _handlePost);
-
       final handler = const Pipeline()
           .addMiddleware(logRequests())
-          .addHandler(router.call);
+          .addHandler(buildHandler());
 
       print('Serving files at http://$ip:$port');
       await io.serve(handler, ip, port);
