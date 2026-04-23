@@ -73,7 +73,7 @@ class FileCmd {
       final dir = Directory(resolvedPath);
       final entries = await dir.list().toList();
       return Response.ok(
-        _Embeded().dirTemplate(
+        Embedded().dirTemplate(
           currentPath: request.url.path,
           entities: entries,
         ),
@@ -209,6 +209,13 @@ class FileCmd {
     }
   }
 
+  Handler buildHandler() {
+    final router = Router();
+    router.get('/<ignored|.*>', _handleGet);
+    router.post('/<ignored|.*>', _handlePost);
+    return router.call;
+  }
+
   Future<void> execute(ArgResults args) async {
     if (args.flag('help')) {
       print(argParser.usage);
@@ -219,13 +226,9 @@ class FileCmd {
       final ip = await _defineIp(args);
       final port = await _definePort(args);
 
-      final router = Router();
-      router.get('/<ignored|.*>', _handleGet);
-      router.post('/<ignored|.*>', _handlePost);
-
       final handler = const Pipeline()
           .addMiddleware(logRequests())
-          .addHandler(router.call);
+          .addHandler(buildHandler());
 
       print('Serving files at http://$ip:$port');
       await io.serve(handler, ip, port);
@@ -235,7 +238,7 @@ class FileCmd {
   }
 }
 
-class _Embeded {
+class Embedded {
   String dirTemplate({
     required String currentPath,
     required List<FileSystemEntity> entities,
@@ -262,7 +265,8 @@ class _Embeded {
     for (final entity in entities) {
       final entityName = p.basename(entity.path);
       final isDir = entity is Directory;
-      final href = isDir ? './$entityName/' : './$entityName';
+      final encodedName = Uri.encodeComponent(entityName);
+      final href = isDir ? './$encodedName/' : './$encodedName';
       final icon = isDir ? '📁' : '📄';
 
       fileListBuffer.write('''
